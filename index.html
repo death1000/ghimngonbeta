@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhimNgon — Ghim địa điểm, gửi cho hội bạn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#142420">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<style>
+
+:root{
+  --bg: #142420;
+  --paper: #F3EDDD;
+  --ink: #24211a;
+  --ink-soft: #5c574a;
+  --red: #D6483F;
+  --red-dark: #7c231d;
+  --yellow: #E8A93A;
+  --yellow-dark: #7a4f0f;
+  --blue: #3E85A6;
+  --blue-dark: #17414f;
+  --green: #6F8F3F;
+  --green-dark: #33430f;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 8px 8px, rgba(255,255,255,0.035) 1px, transparent 1.3px) 0 0/24px 24px,
+    var(--bg);
+  font-family:'Be Vietnam Pro', sans-serif;
+  color: var(--paper);
+  min-height:100vh;
+  padding-bottom:60px;
+}
+.wrap{max-width:920px;margin:0 auto;padding:0 20px;}
+
+header{padding:44px 20px 24px;text-align:center;}
+.brand{
+  font-family:'Baloo 2', sans-serif;font-weight:800;font-size:44px;
+  letter-spacing:-0.5px;color:var(--paper);
+  display:inline-flex;align-items:center;gap:10px;
+}
+.brand .pin{color:var(--red);transform:rotate(-14deg);display:inline-block;}
+.tagline{margin:10px auto 0;max-width:540px;color:#b9c9c2;font-size:15px;line-height:1.6;}
+.tagline b{color:var(--yellow);font-weight:600;}
+
+.digest{
+  max-width:920px;margin:0 auto 18px;
+  background:#1c342c;border:1px solid #2c4a3f;
+  border-radius:999px;
+  padding:10px 18px;
+  font-size:13px;color:#d7e7c9;
+  display:flex;align-items:center;gap:8px;
+  justify-content:center;
+}
+.digest b{color:var(--yellow);}
+
+.tabs{display:flex;gap:6px;margin-bottom:18px;}
+.tab-btn{
+  padding:9px 16px;border-radius:999px;border:1px solid #2c433b;
+  background:transparent;color:#b9c9c2;font-family:inherit;font-size:13.5px;
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+}
+.tab-btn.active{background:var(--yellow);border-color:var(--yellow);color:#3a2705;font-weight:600;}
+
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.search-box{flex:1;min-width:200px;position:relative;}
+.search-box input{
+  width:100%;padding:12px 14px 12px 40px;border-radius:999px;
+  border:1px solid #2c433b;background:#0f1e1a;color:var(--paper);
+  font-family:inherit;font-size:14px;outline:none;
+}
+.search-box input::placeholder{color:#6f8079;}
+.search-box input:focus{border-color:var(--yellow);}
+.search-box svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:0.6;}
+
+.add-btn{
+  padding:12px 20px;border-radius:999px;border:none;background:var(--red);
+  color:#fbe6e0;font-family:'Be Vietnam Pro',sans-serif;font-weight:600;font-size:14px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:transform .12s,background .15s;
+  white-space:nowrap;
+}
+.add-btn:hover{background:#c23d34;}
+.add-btn:active{transform:scale(0.97);}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.chip{
+  padding:7px 13px;border-radius:999px;border:1px solid #2c433b;background:transparent;
+  color:#b9c9c2;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.chip:hover{border-color:var(--yellow);color:var(--yellow);}
+.chip.active{background:var(--yellow);border-color:var(--yellow);color:#3a2705;font-weight:600;}
+.chip.group-chip.active{background:var(--blue);border-color:var(--blue);color:#e7f3f7;}
+select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b9c9c2'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;}
+
+.nearby-btn{
+  padding:7px 13px;border-radius:999px;border:1px solid var(--green);background:transparent;
+  color:#c7dcac;font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:5px;
+}
+.nearby-btn.active{background:var(--green);color:#1c2b0e;font-weight:600;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:20px;margin-top:6px;}
+
+.ticket{
+  background:var(--paper);color:var(--ink);border-radius:4px;position:relative;
+  padding:0 18px 16px;box-shadow:0 10px 22px rgba(0,0,0,0.28);
+  transform:rotate(var(--rot,0deg));transition:transform .18s ease;
+  clip-path: polygon(0% 0%,100% 0%,100% 96%,92% 100%,84% 96%,76% 100%,68% 96%,60% 100%,52% 96%,44% 100%,36% 96%,28% 100%,20% 96%,12% 100%,4% 96%,0% 100%);
+}
+.ticket:hover{transform:rotate(0deg) translateY(-3px);}
+.ticket::before{
+  content:"";position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+  width:14px;height:14px;border-radius:50%;background:var(--red);box-shadow:0 2px 4px rgba(0,0,0,0.4);
+}
+.t-photo{
+  width:calc(100% + 36px);margin:0 -18px 10px;height:120px;border-radius:4px 4px 0 0;
+  background-size:cover;background-position:center;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Baloo 2',sans-serif;font-size:13px;color:#8a8065;
+}
+.t-top{padding-top:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;border-bottom:1px dashed #cabf9d;padding-bottom:10px;margin-bottom:10px;}
+.t-top.no-photo{padding-top:14px;}
+.t-cat{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:4px 9px;border-radius:5px;display:inline-block;}
+.cat-an-sang{background:#f4dfb0;color:var(--yellow-dark);}
+.cat-an-trua{background:#f0c9c4;color:var(--red-dark);}
+.cat-cafe{background:#ded7c4;color:#4a4433;}
+.cat-an-vat{background:#d7e2c2;color:var(--green-dark);}
+.cat-nhau{background:#c6dde6;color:var(--blue-dark);}
+.cat-khac{background:#e3ded0;color:var(--ink-soft);}
+.t-plat{font-size:10px;color:var(--ink-soft);display:flex;align-items:center;gap:4px;}
+.t-group{font-size:10.5px;color:var(--blue-dark);font-weight:600;margin-bottom:4px;}
+.t-name{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:19px;line-height:1.25;margin:0 0 6px;}
+.t-note{font-size:13.5px;color:var(--ink-soft);line-height:1.55;margin:0 0 10px;min-height:20px;}
+
+.status-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.status-btn{
+  font-size:11.5px;padding:5px 10px;border-radius:999px;border:1px solid #d8cfb2;
+  background:#fffdf7;color:var(--ink-soft);cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;gap:4px;
+}
+.status-btn.on-tried{background:var(--green);border-color:var(--green);color:#1c2b0e;font-weight:600;}
+.status-btn.on-want{background:var(--yellow);border-color:var(--yellow);color:#4a2f05;font-weight:600;}
+.status-btn.on-no{background:#e3b6b1;border-color:#e3b6b1;color:var(--red-dark);font-weight:600;}
+
+.t-meta{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#8a8065;border-top:1px dashed #cabf9d;padding-top:10px;}
+.t-from{display:flex;align-items:center;gap:5px;}
+.t-avatar{width:18px;height:18px;border-radius:50%;background:var(--blue);color:#e7f3f7;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.t-actions{display:flex;gap:6px;}
+.t-actions button{border:none;background:transparent;cursor:pointer;color:#8a8065;padding:3px;border-radius:4px;display:flex;align-items:center;gap:3px;font-family:inherit;font-size:11px;}
+.t-actions button:hover{color:var(--ink);background:#e6dfc9;}
+.t-actions .cmt-count{font-size:10.5px;}
+
+.comments-box{margin-top:12px;padding-top:12px;border-top:1px dashed #cabf9d;display:none;}
+.comments-box.show{display:block;}
+.comment{font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;line-height:1.5;}
+.comment b{color:var(--ink);font-weight:600;}
+.comment-form{display:flex;gap:6px;margin-top:8px;}
+.comment-form input{
+  flex:1;padding:8px 10px;border-radius:8px;border:1px solid #d8cfb2;
+  background:#fffdf7;font-family:inherit;font-size:12.5px;outline:none;
+}
+.comment-form input:focus{border-color:var(--red);}
+.comment-form button{
+  border:none;background:var(--ink);color:var(--paper);border-radius:8px;
+  padding:0 12px;cursor:pointer;font-size:12px;
+}
+
+.empty{text-align:center;padding:70px 20px;color:#7c8f86;}
+.empty svg{opacity:0.5;margin-bottom:14px;}
+.empty p{margin:4px 0;font-size:14px;}
+
+#mapView{display:none;}
+#mapView.show{display:block;}
+#leafletMap{
+  width:100%;height:460px;border-radius:14px;overflow:hidden;
+  border:1px solid #2c433b;
+}
+.map-hint{font-size:12.5px;color:#8fa79c;margin:10px 2px 16px;}
+
+.overlay{position:fixed;inset:0;background:rgba(8,15,13,0.72);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50;}
+.overlay.show{display:flex;}
+.modal{background:var(--paper);color:var(--ink);border-radius:14px;width:100%;max-width:460px;padding:26px 26px 22px;box-shadow:0 20px 50px rgba(0,0,0,0.4);}
+.modal h2{font-family:'Baloo 2',sans-serif;font-size:22px;margin:0 0 4px;}
+.modal .sub{font-size:13px;color:var(--ink-soft);margin:0 0 20px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--ink-soft);}
+.field input, .field textarea, .field select{
+  width:100%;padding:10px 12px;border-radius:8px;border:1px solid #d8cfb2;
+  background:#fffdf7;font-family:'Be Vietnam Pro',sans-serif;font-size:14px;color:var(--ink);outline:none;
+}
+.field input:focus, .field textarea:focus, .field select:focus{border-color:var(--red);}
+.field textarea{resize:vertical;min-height:60px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.link-hint{font-size:12px;margin-top:6px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;}
+.link-hint.detected{color:var(--green-dark);font-weight:600;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+.btn-ghost{padding:10px 16px;border-radius:999px;border:1px solid #d8cfb2;background:transparent;color:var(--ink-soft);font-family:inherit;font-size:13.5px;cursor:pointer;}
+.btn-solid{padding:10px 18px;border-radius:999px;border:none;background:var(--red);color:#fbe6e0;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;}
+.btn-solid:hover{background:#c23d34;}
+
+.share-card{background:#fffdf7;border:1px solid #e3dcc6;border-radius:10px;padding:16px;font-size:13.5px;color:var(--ink);line-height:1.7;white-space:pre-wrap;margin:14px 0;font-family:'Be Vietnam Pro',sans-serif;}
+.copied-msg{font-size:12.5px;color:var(--green-dark);font-weight:600;height:16px;}
+
+.leaflet-popup-content{font-family:'Be Vietnam Pro',sans-serif;font-size:13px;}
+.leaflet-popup-content b{font-family:'Baloo 2',sans-serif;font-size:14px;}
+
+@media (max-width:520px){
+  .brand{font-size:34px;}
+  .two-col{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH OVERLAY -->
+<div class="overlay" id="authOverlay" style="z-index:100;">
+  <div class="modal" style="text-align:center;">
+    <h2 style="text-align:left;">Đăng nhập GhimNgon</h2>
+    <p class="sub" style="text-align:left;">Lần đầu thì bấm <b>Tạo tài khoản</b>, những lần sau chỉ cần <b>Đăng nhập</b>. Chỉ hội bạn thân biết link app mới vào được.</p>
+    <div class="field" style="text-align:left;">
+      <label>Tên hiển thị</label>
+      <input id="auth-name" type="text" placeholder="Tên bạn (vd: Trang)">
+    </div>
+    <div class="field" style="text-align:left;">
+      <label>Email của bạn</label>
+      <input id="auth-email" type="email" placeholder="ban@gmail.com">
+    </div>
+    <div class="field" style="text-align:left;">
+      <label>Mật khẩu</label>
+      <input id="auth-password" type="password" placeholder="Ít nhất 6 ký tự" onkeydown="if(event.key==='Enter') handleLogin()">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-ghost" style="flex:1;" onclick="handleSignup()">Tạo tài khoản</button>
+      <button class="btn-solid" style="flex:1;" onclick="handleLogin()">Đăng nhập</button>
+    </div>
+    <p class="copied-msg" id="authMsg" style="margin-top:10px;height:auto;"></p>
+  </div>
+</div>
+
+<div class="wrap" id="appRoot" style="display:none;">
+  <header>
+    <div class="brand"><span class="pin">📌</span>GhimNgon</div>
+    <p class="tagline">Thấy quán ngon trên Facebook hay TikTok, đừng thả link trôi vào tin nhắn nữa —
+      <b>ghim lại đây</b>, kèm ghi chú, rồi gửi nguyên tấm vé cho hội bạn cùng đọc.</p>
+    <p style="margin-top:14px;font-size:12.5px;color:#8fa79c;">
+      Đăng nhập với <b id="authWhoAmI" style="color:var(--yellow);"></b> ·
+      <a href="#" onclick="signOut();return false;" style="color:#8fa79c;">Đăng xuất</a>
+    </p>
+  </header>
+
+  <div class="digest" id="digestBar"></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabList" onclick="switchTab('list')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Danh sách
+    </button>
+    <button class="tab-btn" id="tabMap" onclick="switchTab('map')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Bản đồ
+    </button>
+  </div>
+
+  <div class="controls">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b9c9c2" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" type="text" placeholder="Tìm theo tên quán, ghi chú, người ghim...">
+    </div>
+    <button class="add-btn" onclick="openAddModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ghim quán mới
+    </button>
+  </div>
+
+  <div class="controls" style="margin-top:-6px;">
+    <div class="filters" id="filterChips"></div>
+    <div class="filters">
+      <select class="chip" id="groupSelect" onchange="setGroup(this.value)">
+        <option value="all">Tất cả nhóm</option>
+      </select>
+      <button class="nearby-btn" id="nearbyBtn" onclick="toggleNearby()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        Gần tôi
+      </button>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div id="mapView">
+    <div id="leafletMap"></div>
+    <p class="map-hint">Vị trí trên bản đồ được ước lượng từ tên khu vực bạn nhập — không phải toạ độ chính xác tuyệt đối.</p>
+  </div>
+</div>
+<!-- /appRoot -->
+
+<!-- ADD MODAL -->
+<div class="overlay" id="addOverlay">
+  <div class="modal">
+    <h2>Ghim một quán mới</h2>
+    <p class="sub">Dán link bài viết (Facebook, TikTok, Google Maps...) hoặc chỉ cần ghi chú tay.</p>
+
+    <div class="field">
+      <label>Link bài viết / địa điểm (không bắt buộc)</label>
+      <input id="f-link" type="url" placeholder="https://www.facebook.com/..." oninput="detectPlatform()">
+      <div class="link-hint" id="linkHint">Chưa có link — bạn vẫn có thể ghi chú tay bên dưới.</div>
+    </div>
+
+    <div class="field">
+      <label>Ảnh minh hoạ (dán link ảnh, không bắt buộc)</label>
+      <input id="f-photo" type="url" placeholder="https://...jpg">
+    </div>
+
+    <div class="field">
+      <label>Tên quán *</label>
+      <input id="f-name" type="text" placeholder="Bún chả cô Liên, ngõ 12...">
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label>Khu vực</label>
+        <input id="f-area" type="text" placeholder="Q.1, Hà Nội... hoặc Ba Đình, Tây Hồ...">
+      </div>
+      <div class="field">
+        <label>Danh mục</label>
+        <select id="f-cat">
+          <option value="an-sang">Ăn sáng</option>
+          <option value="an-trua">Ăn trưa / tối</option>
+          <option value="cafe">Cà phê</option>
+          <option value="an-vat">Ăn vặt</option>
+          <option value="nhau">Nhậu</option>
+          <option value="khac">Khác</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label>Nhóm bạn</label>
+        <input id="f-group" type="text" placeholder="Hội đại học, Team công ty..." value="Chung">
+      </div>
+      <div class="field">
+        <label>Bạn là ai</label>
+        <input id="f-from" type="text" placeholder="Tên bạn" value="Bạn">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Ghi chú</label>
+      <textarea id="f-note" placeholder="Món gì ngon, giá khoảng bao nhiêu, ai rủ đi..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeAddModal()">Huỷ</button>
+      <button class="btn-solid" onclick="savePlace()">Ghim lại</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="overlay" id="shareOverlay">
+  <div class="modal">
+    <h2>Gửi cho hội bạn</h2>
+    <p class="sub">Copy đoạn dưới rồi dán qua Messenger/Zalo — gọn gàng hơn nhiều so với ném mỗi cái link.</p>
+    <div class="share-card" id="shareText"></div>
+    <div class="copied-msg" id="copiedMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeShareModal()">Đóng</button>
+      <button class="btn-solid" onclick="copyShare()">Copy nội dung</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS = {
+  'an-sang': {label:'Ăn sáng', cls:'cat-an-sang'},
+  'an-trua': {label:'Ăn trưa/tối', cls:'cat-an-trua'},
+  'cafe':    {label:'Cà phê', cls:'cat-cafe'},
+  'an-vat':  {label:'Ăn vặt', cls:'cat-an-vat'},
+  'nhau':    {label:'Nhậu', cls:'cat-nhau'},
+  'khac':    {label:'Khác', cls:'cat-khac'},
+};
+const STATUS = {
+  want:  {label:'Muốn ăn', cls:'on-want'},
+  tried: {label:'Đã thử', cls:'on-tried'},
+  no:    {label:'Không hợp gu', cls:'on-no'},
+};
+
+// toạ độ ước lượng cho các khu vực phổ biến (để demo bản đồ + gần tôi)
+const AREA_COORDS = {
+  'ba đình':[21.0355,105.8342], 'hoàn kiếm':[21.0285,105.8542], 'tây hồ':[21.0687,105.8228],
+  'đống đa':[21.0170,105.8290], 'hai bà trưng':[21.0075,105.8570], 'cầu giấy':[21.0330,105.7930],
+  'q.1':[10.7769,106.7009], 'quận 1':[10.7769,106.7009], 'q1':[10.7769,106.7009],
+  'q.3':[10.7860,106.6917], 'quận 3':[10.7860,106.6917],
+  'q.7':[10.7340,106.7217], 'quận 7':[10.7340,106.7217],
+  'bình thạnh':[10.8106,106.7091], 'phú nhuận':[10.7990,106.6800],
+  'đà nẵng':[16.0544,108.2022], 'huế':[16.4637,107.5909], 'hải phòng':[20.8449,106.6881],
+  'hà nội':[21.0278,105.8342], 'sài gòn':[10.7769,106.7009], 'tp.hcm':[10.7769,106.7009], 'hcm':[10.7769,106.7009]
+};
+function hashSeed(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
+  return h;
+}
+function guessCoords(area){
+  const key = (area||'').toLowerCase().trim();
+  for(const k in AREA_COORDS){
+    if(key.includes(k)) {
+      const seed = hashSeed(key);
+      const jitter = () => ((seed % 1000)/1000 - 0.5) * 0.02;
+      return [AREA_COORDS[k][0]+jitter(), AREA_COORDS[k][1]+jitter()*1.3];
+    }
+  }
+  const seed = hashSeed(key || 'default');
+  return [21.0278 + ((seed%2000)/2000-0.5)*0.3, 105.8342 + ((seed%3000)/3000-0.5)*0.3];
+}
+function distanceKm(a,b){
+  const R=6371, dLat=(b[0]-a[0])*Math.PI/180, dLon=(b[1]-a[1])*Math.PI/180;
+  const x = Math.sin(dLat/2)**2 + Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2*Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+/* ---------- SUPABASE ---------- */
+const SUPABASE_URL = 'https://clwjlsoywhrbumwiwdjz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_IlmZxyBG-suCMjA2H48rXw_bBKzoyWc';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let displayName = localStorage.getItem('ghimngon_name') || '';
+
+function formatRelativeDate(ts){
+  if(!ts) return '';
+  const diff = Date.now() - ts, day = 86400000;
+  if(diff < 3600000) return 'Vừa xong';
+  if(diff < day) return Math.max(1,Math.floor(diff/3600000)) + ' giờ trước';
+  if(diff < 7*day) return Math.floor(diff/day) + ' ngày trước';
+  if(diff < 30*day) return Math.floor(diff/(7*day)) + ' tuần trước';
+  return Math.floor(diff/(30*day)) + ' tháng trước';
+}
+function rowToPlace(row){
+  return {
+    id: row.id,
+    name: row.name,
+    area: row.area || '',
+    group: row.group_name || 'Chung',
+    cat: row.cat || 'khac',
+    note: row.note || '',
+    link: row.link || '',
+    platform: row.platform || '',
+    photo: row.photo || '',
+    from: row.from_name || 'Bạn',
+    date: formatRelativeDate(row.added_at),
+    addedAt: row.added_at,
+    status: row.status || 'want',
+    comments: row.comments || []
+  };
+}
+
+async function handleSignup(){
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const name = document.getElementById('auth-name').value.trim();
+  const msg = document.getElementById('authMsg');
+  if(!email || !password){ msg.textContent = 'Bạn nhập email và mật khẩu trước đã nhé.'; return; }
+  if(password.length < 6){ msg.textContent = 'Mật khẩu cần ít nhất 6 ký tự.'; return; }
+  if(!name){ msg.textContent = 'Bạn nhập tên hiển thị trước đã nhé.'; return; }
+  msg.textContent = 'Đang tạo tài khoản...';
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if(error){ msg.textContent = 'Có lỗi: ' + error.message; return; }
+  localStorage.setItem('ghimngon_name', name);
+  if(data.session){
+    msg.textContent = 'Tạo tài khoản thành công!';
+  } else {
+    msg.textContent = 'Đã tạo tài khoản. Giờ bấm Đăng nhập để vào app.';
+  }
+}
+
+async function handleLogin(){
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const name = document.getElementById('auth-name').value.trim();
+  const msg = document.getElementById('authMsg');
+  if(!email || !password){ msg.textContent = 'Bạn nhập email và mật khẩu trước đã nhé.'; return; }
+  msg.textContent = 'Đang đăng nhập...';
+  if(name) localStorage.setItem('ghimngon_name', name);
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ msg.textContent = 'Sai email/mật khẩu, hoặc bạn chưa tạo tài khoản: ' + error.message; }
+}
+
+async function signOut(){
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function onAuthed(session){
+  currentUser = session.user;
+  displayName = localStorage.getItem('ghimngon_name') || '';
+  document.getElementById('authOverlay').classList.remove('show');
+  document.getElementById('appRoot').style.display = 'block';
+  document.getElementById('authWhoAmI').textContent = displayName || currentUser.email;
+  if(!window.__ghimngonLoaded){
+    window.__ghimngonLoaded = true;
+    document.getElementById('grid').innerHTML = '<div class="empty" style="grid-column:1/-1;"><p>Đang tải danh sách...</p></div>';
+    await loadPlaces();
+    render();
+    subscribeRealtime();
+  }
+}
+
+async function initAuth(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session){ onAuthed(session); }
+  else { document.getElementById('authOverlay').classList.add('show'); }
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(session) onAuthed(session);
+  });
+}
+
+function subscribeRealtime(){
+  sb.channel('places-changes')
+    .on('postgres_changes', { event:'*', schema:'public', table:'places' }, payload=>{
+      if(payload.eventType === 'INSERT'){
+        if(!places.find(p=>p.id===payload.new.id)){
+          places.push(rowToPlace(payload.new));
+          render();
+        }
+      } else if(payload.eventType === 'UPDATE'){
+        const idx = places.findIndex(p=>p.id===payload.new.id);
+        if(idx>-1){ places[idx] = rowToPlace(payload.new); render(); }
+      } else if(payload.eventType === 'DELETE'){
+        places = places.filter(p=>p.id!==payload.old.id);
+        render();
+      }
+    })
+    .subscribe();
+}
+
+let places = [];
+
+async function loadPlaces(){
+  const { data, error } = await sb.from('places').select('*').order('added_at', { ascending:true });
+  if(error){ console.error('Không tải được dữ liệu', error); places = []; return; }
+  places = (data||[]).map(rowToPlace);
+}
+
+let activeFilter = 'all';
+let activeGroup = 'all';
+let searchQuery = '';
+let currentTab = 'list';
+let nearbyOn = false;
+let userCoords = null;
+let expandedComments = new Set();
+let leafletMap = null;
+let leafletMarkers = [];
+
+function detectPlatform(){
+  const val = document.getElementById('f-link').value.trim();
+  const hint = document.getElementById('linkHint');
+  if(!val){ hint.textContent='Chưa có link — bạn vẫn có thể ghi chú tay bên dưới.'; hint.classList.remove('detected'); return null; }
+  let platform='Link';
+  if(val.includes('facebook.com')||val.includes('fb.watch')) platform='Facebook';
+  else if(val.includes('tiktok.com')) platform='TikTok';
+  else if(val.includes('maps.google')||val.includes('goo.gl/maps')||val.includes('maps.app')) platform='Google Maps';
+  else if(val.includes('instagram.com')) platform='Instagram';
+  else { try{ platform = new URL(val).hostname.replace('www.',''); }catch(e){ platform='Link'; } }
+  hint.textContent = 'Đã nhận diện: ' + platform;
+  hint.classList.add('detected');
+  return platform;
+}
+function initials(name){ return name.trim().split(/\s+/).slice(-1)[0].charAt(0).toUpperCase(); }
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function renderDigest(){
+  const weekAgo = Date.now() - 7*86400000;
+  const count = places.filter(p=>p.addedAt >= weekAgo).length;
+  const bar = document.getElementById('digestBar');
+  if(count===0){ bar.style.display='none'; return; }
+  bar.style.display='flex';
+  bar.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d7e7c9" stroke-width="2"><path d="M12 2l2.4 6.9L22 9.3l-5.7 4.6L18 22l-6-4-6 4 1.7-8.1L2 9.3l7.6-.4z"/></svg>
+    Tuần này hội bạn ghim thêm <b>${count} quán mới</b> — lướt xem có gì hay không.`;
+}
+
+function renderGroupOptions(){
+  const sel = document.getElementById('groupSelect');
+  const groups = Array.from(new Set(places.map(p=>p.group).filter(Boolean)));
+  const current = sel.value || 'all';
+  sel.innerHTML = `<option value="all">Tất cả nhóm</option>` +
+    groups.map(g=>`<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+  sel.value = groups.includes(current) ? current : 'all';
+}
+function setGroup(val){ activeGroup = val; render(); }
+
+function renderFilters(){
+  const wrap = document.getElementById('filterChips');
+  const all = [{key:'all', label:'Tất cả'}, ...Object.entries(CATS).map(([k,v])=>({key:k,label:v.label}))];
+  wrap.innerHTML = all.map(c=>`<button class="chip ${activeFilter===c.key?'active':''}" onclick="setFilter('${c.key}')">${c.label}</button>`).join('');
+}
+function setFilter(key){ activeFilter = key; render(); }
+
+function toggleNearby(){
+  if(!nearbyOn){
+    if(!navigator.geolocation){ alert('Trình duyệt không hỗ trợ định vị.'); return; }
+    navigator.geolocation.getCurrentPosition(pos=>{
+      userCoords = [pos.coords.latitude, pos.coords.longitude];
+      nearbyOn = true;
+      document.getElementById('nearbyBtn').classList.add('active');
+      render();
+    }, err=>{
+      alert('Không lấy được vị trí, bạn kiểm tra lại quyền truy cập vị trí nhé.');
+    });
+  } else {
+    nearbyOn = false;
+    document.getElementById('nearbyBtn').classList.remove('active');
+    render();
+  }
+}
+
+function matchesSearch(p){
+  if(!searchQuery) return true;
+  const q = searchQuery.toLowerCase();
+  return (p.name+p.area+p.note+p.from+p.group).toLowerCase().includes(q);
+}
+
+function getFilteredList(){
+  let list = places
+    .filter(p => activeFilter==='all' || p.cat===activeFilter)
+    .filter(p => activeGroup==='all' || p.group===activeGroup)
+    .filter(matchesSearch);
+  if(nearbyOn && userCoords){
+    list = list.map(p=>({...p, _dist: distanceKm(userCoords, guessCoords(p.area))}))
+               .sort((a,b)=>a._dist-b._dist);
+  } else {
+    list = list.slice().reverse();
+  }
+  return list;
+}
+
+function switchTab(tab){
+  currentTab = tab;
+  document.getElementById('tabList').classList.toggle('active', tab==='list');
+  document.getElementById('tabMap').classList.toggle('active', tab==='map');
+  document.getElementById('grid').style.display = tab==='list' ? 'grid' : 'none';
+  document.getElementById('mapView').classList.toggle('show', tab==='map');
+  if(tab==='map') renderMap();
+}
+
+function render(){
+  renderDigest();
+  renderGroupOptions();
+  renderFilters();
+  const grid = document.getElementById('grid');
+  const list = getFilteredList();
+
+  if(list.length===0){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#7c8f86" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <p>Chưa có quán nào khớp cả.</p><p>Thử ghim quán đầu tiên xem sao.</p>
+    </div>`;
+  } else {
+    grid.innerHTML = list.map((p,i) => {
+      const cat = CATS[p.cat];
+      const rot = (i % 5 - 2) * 0.6;
+      const st = STATUS[p.status] || STATUS.want;
+      const commentsOpen = expandedComments.has(p.id);
+      const distTag = (nearbyOn && p._dist!==undefined) ? `<span class="t-plat">· ${p._dist.toFixed(1)} km</span>` : '';
+      return `<div class="ticket" style="--rot:${rot}deg">
+        ${p.photo ? `<div class="t-photo" style="background-image:url('${escapeHtml(p.photo)}')"></div>` : ''}
+        <div class="t-top ${p.photo?'':'no-photo'}">
+          <span class="t-cat ${cat.cls}">${cat.label}</span>
+          <span style="display:flex;align-items:center;gap:4px;">
+            ${p.platform ? `<span class="t-plat">${p.platform}</span>` : ''}${distTag}
+          </span>
+        </div>
+        ${p.group ? `<div class="t-group">Nhóm: ${escapeHtml(p.group)}</div>` : ''}
+        <h3 class="t-name">${escapeHtml(p.name)}</h3>
+        ${p.area ? `<div class="t-plat" style="margin-bottom:8px;">${escapeHtml(p.area)}</div>` : ''}
+        <p class="t-note">${escapeHtml(p.note || 'Chưa có ghi chú.')}</p>
+
+        <div class="status-row">
+          <button class="status-btn ${p.status==='want'?'on-want':''}" onclick="setStatus('${p.id}','want')">Muốn ăn</button>
+          <button class="status-btn ${p.status==='tried'?'on-tried':''}" onclick="setStatus('${p.id}','tried')">Đã thử</button>
+          <button class="status-btn ${p.status==='no'?'on-no':''}" onclick="setStatus('${p.id}','no')">Không hợp gu</button>
+        </div>
+
+        <div class="t-meta">
+          <div class="t-from">
+            <span class="t-avatar">${initials(p.from)}</span>
+            <span>${escapeHtml(p.from)} · ${p.date}</span>
+          </div>
+          <div class="t-actions">
+            ${p.link ? `<button title="Mở link" onclick="openLinkSafe('${encodeURIComponent(p.link)}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </button>` : ''}
+            <button title="Bình luận" onclick="toggleComments('${p.id}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              <span class="cmt-count">${p.comments.length||''}</span>
+            </button>
+            <button title="Chia sẻ" onclick="openShare('${p.id}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+            </button>
+            <button title="Xoá" onclick="deletePlace('${p.id}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="comments-box ${commentsOpen?'show':''}" id="comments-${p.id}">
+          ${p.comments.map(c=>`<div class="comment"><b>${escapeHtml(c.who)}:</b> ${escapeHtml(c.text)}</div>`).join('') || '<div class="comment" style="opacity:0.6">Chưa có bình luận nào.</div>'}
+          <div class="comment-form">
+            <input type="text" id="cmt-input-${p.id}" placeholder="Viết bình luận..." onkeydown="if(event.key==='Enter') addComment('${p.id}')">
+            <button onclick="addComment('${p.id}')">Gửi</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if(currentTab==='map') renderMap();
+}
+
+async function setStatus(id, status){
+  const p = places.find(x=>x.id===id);
+  if(p) p.status = status;
+  render();
+  const { error } = await sb.from('places').update({ status }).eq('id', id);
+  if(error) console.error('Không lưu trạng thái', error);
+}
+function toggleComments(id){
+  if(expandedComments.has(id)) expandedComments.delete(id); else expandedComments.add(id);
+  render();
+}
+async function addComment(id){
+  const input = document.getElementById('cmt-input-'+id);
+  const text = input.value.trim();
+  if(!text) return;
+  const p = places.find(x=>x.id===id);
+  const who = displayName || (currentUser && currentUser.email) || 'Bạn';
+  p.comments.push({who, text});
+  expandedComments.add(id);
+  input.value = '';
+  render();
+  const { error } = await sb.from('places').update({ comments: p.comments }).eq('id', id);
+  if(error) console.error('Không lưu bình luận', error);
+}
+function openLinkSafe(encoded){ window.open(decodeURIComponent(encoded), '_blank', 'noopener'); }
+
+document.getElementById('searchInput').addEventListener('input', e=>{ searchQuery = e.target.value; render(); });
+
+/* ---------- MAP ---------- */
+function renderMap(){
+  const list = getFilteredList();
+  if(!leafletMap){
+    leafletMap = L.map('leafletMap').setView([16.05, 106.5], 5.2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 18
+    }).addTo(leafletMap);
+  }
+  leafletMarkers.forEach(m=>leafletMap.removeLayer(m));
+  leafletMarkers = [];
+  const bounds = [];
+  list.forEach(p=>{
+    const coords = guessCoords(p.area);
+    bounds.push(coords);
+    const cat = CATS[p.cat];
+    const marker = L.circleMarker(coords, {
+      radius:8, color:'#D6483F', weight:2, fillColor:'#E8A93A', fillOpacity:0.9
+    }).addTo(leafletMap);
+    marker.bindPopup(`<b>${escapeHtml(p.name)}</b><br>${cat.label}${p.area?' · '+escapeHtml(p.area):''}<br>${escapeHtml(p.note||'')}`);
+    leafletMarkers.push(marker);
+  });
+  if(bounds.length) leafletMap.fitBounds(bounds, {padding:[30,30], maxZoom:13});
+  setTimeout(()=>leafletMap.invalidateSize(), 150);
+}
+
+/* ---------- ADD ---------- */
+function openAddModal(){
+  document.getElementById('addOverlay').classList.add('show');
+  document.getElementById('f-link').value='';
+  document.getElementById('f-photo').value='';
+  document.getElementById('f-name').value='';
+  document.getElementById('f-area').value='';
+  document.getElementById('f-note').value='';
+  document.getElementById('f-cat').value='an-trua';
+  document.getElementById('f-group').value='Chung';
+  detectPlatform();
+}
+function closeAddModal(){ document.getElementById('addOverlay').classList.remove('show'); }
+
+async function savePlace(){
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){ alert('Bạn nhập tên quán trước đã nhé.'); return; }
+  const link = document.getElementById('f-link').value.trim();
+  const platform = link ? detectPlatform() : '';
+  const from = displayName || document.getElementById('f-from')?.value.trim() || 'Bạn';
+  const row = {
+    name,
+    area: document.getElementById('f-area').value.trim(),
+    group_name: document.getElementById('f-group').value.trim() || 'Chung',
+    cat: document.getElementById('f-cat').value,
+    note: document.getElementById('f-note').value.trim(),
+    link, platform,
+    photo: document.getElementById('f-photo').value.trim(),
+    from_name: from,
+    added_at: Date.now(),
+    status: 'want',
+    comments: [],
+    created_by: currentUser ? currentUser.id : null
+  };
+  closeAddModal();
+  activeFilter='all'; activeGroup='all';
+  const { data, error } = await sb.from('places').insert(row).select().single();
+  if(error){ alert('Không ghim được, thử lại nhé: ' + error.message); return; }
+  if(!places.find(p=>p.id===data.id)) places.push(rowToPlace(data));
+  render();
+}
+async function deletePlace(id){
+  places = places.filter(p=>p.id!==id);
+  expandedComments.delete(id);
+  render();
+  const { error } = await sb.from('places').delete().eq('id', id);
+  if(error) console.error('Không xoá được', error);
+}
+
+/* ---------- SHARE ---------- */
+function openShare(id){
+  const p = places.find(x=>x.id===id);
+  if(!p) return;
+  const cat = CATS[p.cat].label;
+  let text = `📌 ${p.name}\n`;
+  if(p.area) text += `📍 ${p.area}\n`;
+  text += `🏷️ ${cat}\n`;
+  if(p.note) text += `\n${p.note}\n`;
+  if(p.link) text += `\n🔗 ${p.link}\n`;
+  text += `\n— ghim bởi ${p.from}, qua GhimNgon`;
+  document.getElementById('shareText').textContent = text;
+  document.getElementById('copiedMsg').textContent = '';
+  document.getElementById('shareOverlay').classList.add('show');
+}
+function closeShareModal(){ document.getElementById('shareOverlay').classList.remove('show'); }
+function copyShare(){
+  const text = document.getElementById('shareText').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    document.getElementById('copiedMsg').textContent = 'Đã copy — giờ dán qua Messenger/Zalo thôi.';
+  }).catch(()=>{
+    document.getElementById('copiedMsg').textContent = 'Không copy được tự động, bạn bôi đen và copy tay giúp mình nhé.';
+  });
+}
+
+[document.getElementById('addOverlay'), document.getElementById('shareOverlay')].forEach(ov=>{
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('show'); });
+});
+
+initAuth();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>console.error('SW lỗi:', err));
+  });
+}
+</script>
+</body>
+</html>
