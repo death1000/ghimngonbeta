@@ -110,6 +110,7 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
 .nearby-btn.active{background:var(--green);color:#1c2b0e;font-weight:600;}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:20px;margin-top:6px;}
+#grid.hide-tab{display:none;}
 
 .ticket{
   background:var(--paper);color:var(--ink);border-radius:4px;position:relative;
@@ -155,10 +156,22 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
 .t-meta{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#8a8065;border-top:1px dashed #cabf9d;padding-top:10px;}
 .t-from{display:flex;align-items:center;gap:5px;}
 .t-avatar{width:18px;height:18px;border-radius:50%;background:var(--blue);color:#e7f3f7;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;}
-.t-actions{display:flex;gap:6px;}
-.t-actions button{border:none;background:transparent;cursor:pointer;color:#8a8065;padding:3px;border-radius:4px;display:flex;align-items:center;gap:3px;font-family:inherit;font-size:11px;}
+.t-actions{display:flex;gap:2px;position:relative;}
+.t-actions button{border:none;background:transparent;cursor:pointer;color:#8a8065;padding:6px;border-radius:6px;display:flex;align-items:center;gap:3px;font-family:inherit;font-size:11px;min-width:28px;min-height:28px;justify-content:center;}
 .t-actions button:hover{color:var(--ink);background:#e6dfc9;}
+.t-actions button.active{color:var(--blue-dark);background:#d3e4e9;}
 .t-actions .cmt-count{font-size:10.5px;}
+
+/* dropdown "more actions" menu */
+.dropdown-menu{position:fixed;background:#fffdf7;border:1px solid #e3dcc6;border-radius:10px;
+  box-shadow:0 12px 28px rgba(0,0,0,0.3);min-width:168px;padding:6px;z-index:120;visibility:hidden;}
+.dropdown-menu button{width:100%;text-align:left;background:transparent;border:none;padding:9px 10px;
+  border-radius:7px;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:9px;
+  cursor:pointer;font-family:inherit;}
+.dropdown-menu button:hover{background:#f0ead5;}
+.dropdown-menu button.danger{color:var(--red-dark);}
+.dropdown-menu button.danger:hover{background:#f5dedb;}
+.dropdown-menu hr{border:none;border-top:1px solid #e3dcc6;margin:5px 2px;}
 
 .comments-box{margin-top:12px;padding-top:12px;border-top:1px dashed #cabf9d;display:none;}
 .comments-box.show{display:block;}
@@ -179,8 +192,9 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
 .row{
   background:var(--paper);color:var(--ink);border-radius:8px;
   padding:10px 14px;box-shadow:0 3px 8px rgba(0,0,0,0.18);
-  display:flex;align-items:center;gap:12px;transform:none;clip-path:none;
+  transform:none;clip-path:none;
 }
+.row-top{display:flex;align-items:center;gap:12px;}
 .row-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .row-dot.st-want{background:var(--yellow-dark);}
 .row-dot.st-tried{background:var(--green-dark);}
@@ -191,9 +205,10 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
 .row-sub{font-size:11px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
 .row-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;
   padding:3px 8px;border-radius:5px;flex-shrink:0;}
-.row-actions{display:flex;gap:4px;flex-shrink:0;}
-.row-actions button{border:none;background:transparent;cursor:pointer;color:#8a8065;padding:5px;border-radius:5px;display:flex;align-items:center;}
+.row-actions{display:flex;gap:2px;flex-shrink:0;position:relative;}
+.row-actions button{border:none;background:transparent;cursor:pointer;color:#8a8065;padding:7px;border-radius:6px;display:flex;align-items:center;justify-content:center;gap:3px;min-width:30px;min-height:30px;font-family:inherit;font-size:11px;}
 .row-actions button:hover{color:var(--ink);background:#e6dfc9;}
+.row-actions button.active{color:var(--blue-dark);background:#d3e4e9;}
 @media (max-width:560px){
   .row-cat{display:none;}
   .row-name{font-size:14px;}
@@ -335,6 +350,10 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
         Gần tôi
       </button>
+      <button class="nearby-btn" id="leaderboardBtn" onclick="openLeaderboard()" style="border-color:var(--yellow);color:#e9d3a0;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H4a2 2 0 0 0 0 4h1"/><path d="M17 5h3a2 2 0 0 1 0 4h-1"/></svg>
+        Xếp hạng
+      </button>
     </div>
   </div>
 
@@ -347,11 +366,11 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
 </div>
 <!-- /appRoot -->
 
-<!-- ADD MODAL -->
+<!-- ADD / EDIT MODAL -->
 <div class="overlay" id="addOverlay">
   <div class="modal">
-    <h2>Ghim một quán mới</h2>
-    <p class="sub">Dán link bài viết (Facebook, TikTok, Google Maps...) hoặc chỉ cần ghi chú tay.</p>
+    <h2 id="addModalTitle">Ghim một quán mới</h2>
+    <p class="sub" id="addModalSub">Dán link bài viết (Facebook, TikTok, Google Maps...) hoặc chỉ cần ghi chú tay.</p>
 
     <div class="field">
       <label>Link bài viết / địa điểm (không bắt buộc)</label>
@@ -405,7 +424,7 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
 
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeAddModal()">Huỷ</button>
-      <button class="btn-solid" onclick="savePlace()">Ghim lại</button>
+      <button class="btn-solid" id="saveBtnLabel" onclick="savePlace()">Ghim lại</button>
     </div>
   </div>
 </div>
@@ -414,12 +433,27 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
 <div class="overlay" id="shareOverlay">
   <div class="modal">
     <h2>Gửi cho hội bạn</h2>
-    <p class="sub">Copy đoạn dưới rồi dán qua Messenger/Zalo — gọn gàng hơn nhiều so với ném mỗi cái link.</p>
+    <p class="sub">Copy đoạn dưới, hoặc chia sẻ trực tiếp qua ứng dụng — gọn gàng hơn nhiều so với ném mỗi cái link.</p>
     <div class="share-card" id="shareText"></div>
     <div class="copied-msg" id="copiedMsg"></div>
-    <div class="modal-actions">
+    <div class="modal-actions" style="justify-content:space-between;">
       <button class="btn-ghost" onclick="closeShareModal()">Đóng</button>
-      <button class="btn-solid" onclick="copyShare()">Copy nội dung</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-ghost" onclick="copyShare()">Copy nội dung</button>
+        <button class="btn-solid" id="nativeShareBtn" onclick="nativeShare()">Chia sẻ trực tiếp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEADERBOARD MODAL -->
+<div class="overlay" id="leaderboardOverlay">
+  <div class="modal">
+    <h2>🏆 Bảng xếp hạng hội bạn</h2>
+    <p class="sub" id="leaderboardSub">Ai đang ghim quán nhiệt tình nhất nhóm?</p>
+    <div id="leaderboardBody"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeLeaderboardModal()">Đóng</button>
     </div>
   </div>
 </div>
@@ -557,6 +591,7 @@ async function onAuthed(session){
     await loadPlaces();
     render();
     subscribeRealtime();
+    openPlaceFromUrl();
   }
 }
 
@@ -636,6 +671,46 @@ function detectPlatform(){
 function initials(name){ return name.trim().split(/\s+/).slice(-1)[0].charAt(0).toUpperCase(); }
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
+/* ---------- MORE-ACTIONS DROPDOWN (Chia sẻ / Sửa / Xoá) ---------- */
+let openMenuEl = null;
+const ICON_SHARE = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>`;
+const ICON_EDIT = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const ICON_TRASH = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+
+function closeActionMenu(){
+  if(openMenuEl){ openMenuEl.remove(); openMenuEl = null; }
+}
+function toggleActionMenu(id, btn, ev){
+  ev.stopPropagation();
+  if(openMenuEl){ closeActionMenu(); return; }
+  const menu = document.createElement('div');
+  menu.className = 'dropdown-menu';
+  menu.innerHTML = `
+    <button onclick="closeActionMenu();openShare('${id}')">${ICON_SHARE}Chia sẻ</button>
+    <button onclick="closeActionMenu();openAddModal('${id}')">${ICON_EDIT}Sửa thông tin</button>
+    <hr>
+    <button class="danger" onclick="closeActionMenu();deletePlace('${id}')">${ICON_TRASH}Xoá quán</button>
+  `;
+  document.body.appendChild(menu);
+  const btnRect = btn.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+  let left = btnRect.right - menuRect.width;
+  left = Math.max(8, Math.min(left, window.innerWidth - menuRect.width - 8));
+  let top = btnRect.top - menuRect.height - 6;
+  if(top < 8) top = btnRect.bottom + 6; // not enough room above -> open below instead
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+  menu.style.visibility = 'visible';
+  openMenuEl = menu;
+}
+document.addEventListener('click', e=>{
+  if(!openMenuEl) return;
+  if(openMenuEl.contains(e.target) || e.target.closest('.kebab-btn')) return;
+  closeActionMenu();
+});
+window.addEventListener('scroll', closeActionMenu, true);
+window.addEventListener('resize', closeActionMenu);
+
 function renderDigest(){
   const weekAgo = Date.now() - 7*86400000;
   const count = places.filter(p=>p.addedAt >= weekAgo).length;
@@ -705,12 +780,13 @@ function switchTab(tab){
   currentTab = tab;
   document.getElementById('tabList').classList.toggle('active', tab==='list');
   document.getElementById('tabMap').classList.toggle('active', tab==='map');
-  document.getElementById('grid').style.display = tab==='list' ? 'grid' : 'none';
+  document.getElementById('grid').classList.toggle('hide-tab', tab!=='list');
   document.getElementById('mapView').classList.toggle('show', tab==='map');
   if(tab==='map') renderMap();
 }
 
 function render(){
+  closeActionMenu();
   renderDigest();
   renderGroupOptions();
   renderFilters();
@@ -729,23 +805,35 @@ function render(){
       const cat = CATS[p.cat];
       const distTag = (nearbyOn && p._dist!==undefined) ? ` · ${p._dist.toFixed(1)} km` : '';
       const subParts = [p.area, p.group ? `Nhóm: ${p.group}` : '', `${p.from} · ${p.date}${distTag}`].filter(Boolean);
+      const commentsOpen = expandedComments.has(p.id);
       return `<div class="row">
-        <span class="row-dot st-${p.status}" title="${STATUS[p.status]?.label || ''}"></span>
-        <div class="row-main">
-          <div class="row-name">${escapeHtml(p.name)}</div>
-          <div class="row-sub">${escapeHtml(subParts.join(' · '))}</div>
+        <div class="row-top">
+          <span class="row-dot st-${p.status}" title="${STATUS[p.status]?.label || ''}"></span>
+          <div class="row-main">
+            <div class="row-name">${escapeHtml(p.name)}</div>
+            <div class="row-sub">${escapeHtml(subParts.join(' · '))}</div>
+          </div>
+          <span class="row-cat ${cat.cls}">${cat.label}</span>
+          <div class="row-actions">
+            ${p.link ? `<button title="Mở link" onclick="openLinkSafe('${encodeURIComponent(p.link)}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </button>` : ''}
+            <button title="Bình luận" class="${commentsOpen?'active':''}" onclick="toggleComments('${p.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              <span class="cmt-count">${p.comments.length||''}</span>
+            </button>
+            <button title="Thêm" class="kebab-btn" onclick="toggleActionMenu('${p.id}', this, event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </button>
+          </div>
         </div>
-        <span class="row-cat ${cat.cls}">${cat.label}</span>
-        <div class="row-actions">
-          ${p.link ? `<button title="Mở link" onclick="openLinkSafe('${encodeURIComponent(p.link)}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </button>` : ''}
-          <button title="Bình luận" onclick="switchToFullAndOpen('${p.id}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          </button>
-          <button title="Xoá" onclick="deletePlace('${p.id}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          </button>
+
+        <div class="comments-box ${commentsOpen?'show':''}" id="comments-${p.id}">
+          ${p.comments.map(c=>`<div class="comment"><b>${escapeHtml(c.who)}:</b> ${escapeHtml(c.text)}</div>`).join('') || '<div class="comment" style="opacity:0.6">Chưa có bình luận nào.</div>'}
+          <div class="comment-form">
+            <input type="text" id="cmt-input-${p.id}" placeholder="Viết bình luận..." onkeydown="if(event.key==='Enter') addComment('${p.id}')">
+            <button onclick="addComment('${p.id}')">Gửi</button>
+          </div>
         </div>
       </div>`;
     }).join('');
@@ -784,15 +872,12 @@ function render(){
             ${p.link ? `<button title="Mở link" onclick="openLinkSafe('${encodeURIComponent(p.link)}')">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             </button>` : ''}
-            <button title="Bình luận" onclick="toggleComments('${p.id}')">
+            <button title="Bình luận" class="${commentsOpen?'active':''}" onclick="toggleComments('${p.id}')">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
               <span class="cmt-count">${p.comments.length||''}</span>
             </button>
-            <button title="Chia sẻ" onclick="openShare('${p.id}')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
-            </button>
-            <button title="Xoá" onclick="deletePlace('${p.id}')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            <button title="Thêm" class="kebab-btn" onclick="toggleActionMenu('${p.id}', this, event)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>
             </button>
           </div>
         </div>
@@ -813,22 +898,58 @@ function render(){
 
 async function setStatus(id, status){
   const p = places.find(x=>x.id===id);
+  const wasTried = p && p.status === 'tried';
   if(p) p.status = status;
   render();
+  if(status === 'tried' && !wasTried) fireConfetti();
   const { error } = await sb.from('places').update({ status }).eq('id', id);
   if(error) console.error('Không lưu trạng thái', error);
 }
-function toggleComments(id){
-  if(expandedComments.has(id)) expandedComments.delete(id); else expandedComments.add(id);
-  render();
+
+/* ---------- CONFETTI ---------- */
+function fireConfetti(){
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:400;';
+  canvas.width = innerWidth; canvas.height = innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const colors = ['#D6483F','#E8A93A','#3E85A6','#6F8F3F','#F3EDDD'];
+  const pieces = Array.from({length: 130}, () => ({
+    x: Math.random()*canvas.width,
+    y: -20 - Math.random()*canvas.height*0.4,
+    r: 4 + Math.random()*5,
+    c: colors[Math.floor(Math.random()*colors.length)],
+    vy: 2.5 + Math.random()*3.5,
+    vx: -2.2 + Math.random()*4.4,
+    rot: Math.random()*360,
+    vr: -8 + Math.random()*16
+  }));
+  let frame = 0;
+  function tick(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6);
+      ctx.restore();
+    });
+    frame++;
+    if(frame < 100) requestAnimationFrame(tick);
+    else canvas.remove();
+  }
+  tick();
 }
-function switchToFullAndOpen(id){
-  viewMode = 'full';
-  localStorage.setItem('ghimngon_viewmode', 'full');
-  expandedComments.add(id);
+function toggleComments(id){
+  const opening = !expandedComments.has(id);
+  if(opening) expandedComments.add(id); else expandedComments.delete(id);
   render();
-  const el = document.getElementById('comments-'+id);
-  if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  if(opening){
+    const el = document.getElementById('comments-'+id);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  }
 }
 async function addComment(id){
   const input = document.getElementById('cmt-input-'+id);
@@ -874,9 +995,37 @@ function renderMap(){
   setTimeout(()=>leafletMap.invalidateSize(), 150);
 }
 
-/* ---------- ADD ---------- */
-function openAddModal(){
+/* ---------- ADD / EDIT ---------- */
+let editingId = null;
+function openAddModal(id){
+  editingId = id || null;
   document.getElementById('addOverlay').classList.add('show');
+  const title = document.getElementById('addModalTitle');
+  const sub = document.getElementById('addModalSub');
+  const saveBtn = document.getElementById('saveBtnLabel');
+
+  if(editingId){
+    const p = places.find(x=>x.id===editingId);
+    if(p){
+      title.textContent = 'Sửa thông tin quán';
+      sub.textContent = 'Cập nhật lại thông tin quán đã ghim cho cả nhóm cùng thấy.';
+      saveBtn.textContent = 'Lưu thay đổi';
+      document.getElementById('f-link').value = p.link || '';
+      document.getElementById('f-photo').value = p.photo || '';
+      document.getElementById('f-name').value = p.name || '';
+      document.getElementById('f-area').value = p.area || '';
+      document.getElementById('f-note').value = p.note || '';
+      document.getElementById('f-cat').value = p.cat || 'an-trua';
+      document.getElementById('f-group').value = p.group || 'Chung';
+      const fromField = document.getElementById('f-from');
+      if(fromField) fromField.value = p.from || 'Bạn';
+      detectPlatform();
+      return;
+    }
+  }
+  title.textContent = 'Ghim một quán mới';
+  sub.textContent = 'Dán link bài viết (Facebook, TikTok, Google Maps...) hoặc chỉ cần ghi chú tay.';
+  saveBtn.textContent = 'Ghim lại';
   document.getElementById('f-link').value='';
   document.getElementById('f-photo').value='';
   document.getElementById('f-name').value='';
@@ -886,7 +1035,7 @@ function openAddModal(){
   document.getElementById('f-group').value='Chung';
   detectPlatform();
 }
-function closeAddModal(){ document.getElementById('addOverlay').classList.remove('show'); }
+function closeAddModal(){ document.getElementById('addOverlay').classList.remove('show'); editingId = null; }
 
 async function savePlace(){
   const name = document.getElementById('f-name').value.trim();
@@ -894,6 +1043,30 @@ async function savePlace(){
   const link = document.getElementById('f-link').value.trim();
   const platform = link ? detectPlatform() : '';
   const from = displayName || document.getElementById('f-from')?.value.trim() || 'Bạn';
+
+  if(editingId){
+    const id = editingId;
+    const row = {
+      name,
+      area: document.getElementById('f-area').value.trim(),
+      group_name: document.getElementById('f-group').value.trim() || 'Chung',
+      cat: document.getElementById('f-cat').value,
+      note: document.getElementById('f-note').value.trim(),
+      link, platform,
+      photo: document.getElementById('f-photo').value.trim(),
+    };
+    closeAddModal();
+    const idx = places.findIndex(p=>p.id===id);
+    if(idx>-1){
+      places[idx] = { ...places[idx], name: row.name, area: row.area, group: row.group_name,
+        cat: row.cat, note: row.note, link: row.link, platform: row.platform, photo: row.photo };
+      render();
+    }
+    const { error } = await sb.from('places').update(row).eq('id', id);
+    if(error) alert('Không lưu được thay đổi, thử lại nhé: ' + error.message);
+    return;
+  }
+
   const row = {
     name,
     area: document.getElementById('f-area').value.trim(),
@@ -915,27 +1088,82 @@ async function savePlace(){
   if(!places.find(p=>p.id===data.id)) places.push(rowToPlace(data));
   render();
 }
-async function deletePlace(id){
-  places = places.filter(p=>p.id!==id);
+
+/* ---------- DELETE: confirm + undo ---------- */
+let undoToastEl = null;
+function deletePlace(id){
+  const p = places.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm(`Xoá "${p.name}" khỏi danh sách chung của cả nhóm?`)) return;
+
+  // if a previous pending delete exists, finalize it immediately first
+  if(undoToastEl){
+    clearTimeout(undoToastEl._timer);
+    finalizeDelete(undoToastEl._place.id);
+    undoToastEl.remove();
+    undoToastEl = null;
+  }
+
+  const idx = places.findIndex(x=>x.id===id);
+  const removed = places[idx];
+  places.splice(idx, 1);
   expandedComments.delete(id);
   render();
+  showUndoToast(removed, idx);
+}
+function showUndoToast(place, idx){
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:22px;left:50%;transform:translateX(-50%);' +
+    'background:#1c342c;color:var(--paper);padding:12px 12px 12px 18px;border-radius:999px;' +
+    'display:flex;align-items:center;gap:12px;box-shadow:0 10px 26px rgba(0,0,0,.45);' +
+    'z-index:300;font-size:13.5px;border:1px solid #2c4a3f;max-width:90vw;';
+  toast.innerHTML = `<span>Đã xoá "${escapeHtml(place.name)}".</span>
+    <button style="background:var(--yellow);border:none;color:#3a2705;font-weight:600;
+      padding:7px 14px;border-radius:999px;cursor:pointer;font-family:inherit;white-space:nowrap;">Hoàn tác</button>`;
+  toast._place = place;
+  toast.querySelector('button').onclick = ()=>{
+    clearTimeout(toast._timer);
+    const insertAt = Math.min(idx, places.length);
+    places.splice(insertAt, 0, place);
+    render();
+    toast.remove();
+    if(undoToastEl===toast) undoToastEl = null;
+  };
+  document.body.appendChild(toast);
+  toast._timer = setTimeout(()=>{
+    finalizeDelete(place.id);
+    toast.remove();
+    if(undoToastEl===toast) undoToastEl = null;
+  }, 5000);
+  undoToastEl = toast;
+}
+async function finalizeDelete(id){
   const { error } = await sb.from('places').delete().eq('id', id);
   if(error) console.error('Không xoá được', error);
 }
 
 /* ---------- SHARE ---------- */
+let shareLinkUrl = '';
+function directLinkFor(id){
+  const url = new URL(location.href);
+  url.searchParams.set('place', id);
+  return url.toString();
+}
 function openShare(id){
   const p = places.find(x=>x.id===id);
   if(!p) return;
   const cat = CATS[p.cat].label;
+  shareLinkUrl = directLinkFor(id);
   let text = `📌 ${p.name}\n`;
   if(p.area) text += `📍 ${p.area}\n`;
   text += `🏷️ ${cat}\n`;
   if(p.note) text += `\n${p.note}\n`;
-  if(p.link) text += `\n🔗 ${p.link}\n`;
+  if(p.link) text += `\n🔗 Link gốc: ${p.link}\n`;
+  text += `\n🔗 Xem trên GhimNgon: ${shareLinkUrl}\n`;
   text += `\n— ghim bởi ${p.from}, qua GhimNgon`;
   document.getElementById('shareText').textContent = text;
   document.getElementById('copiedMsg').textContent = '';
+  document.getElementById('nativeShareBtn').style.display = navigator.share ? 'inline-flex' : 'none';
   document.getElementById('shareOverlay').classList.add('show');
 }
 function closeShareModal(){ document.getElementById('shareOverlay').classList.remove('show'); }
@@ -947,8 +1175,70 @@ function copyShare(){
     document.getElementById('copiedMsg').textContent = 'Không copy được tự động, bạn bôi đen và copy tay giúp mình nhé.';
   });
 }
+function nativeShare(){
+  if(!navigator.share){ copyShare(); return; }
+  const text = document.getElementById('shareText').textContent;
+  navigator.share({ title: 'GhimNgon', text, url: shareLinkUrl }).catch(()=>{});
+}
+function openPlaceFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const id = params.get('place');
+  if(!id) return;
+  const p = places.find(x=>x.id===id);
+  if(!p) return;
+  activeFilter = 'all'; activeGroup = 'all'; searchQuery = '';
+  const input = document.getElementById('searchInput');
+  if(input) input.value = '';
+  switchTab('list');
+  viewMode = 'full';
+  render();
+  setTimeout(()=>{
+    const grid = document.getElementById('grid');
+    const target = Array.from(grid.querySelectorAll('.ticket')).find(el=>el.innerHTML.includes(escapeHtml(p.name)));
+    if(target) target.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 100);
+}
 
-[document.getElementById('addOverlay'), document.getElementById('shareOverlay')].forEach(ov=>{
+/* ---------- LEADERBOARD ---------- */
+function openLeaderboard(){
+  renderLeaderboard();
+  document.getElementById('leaderboardOverlay').classList.add('show');
+}
+function closeLeaderboardModal(){ document.getElementById('leaderboardOverlay').classList.remove('show'); }
+function renderLeaderboard(){
+  const scope = activeGroup === 'all' ? places : places.filter(p=>p.group===activeGroup);
+  document.getElementById('leaderboardSub').textContent = activeGroup === 'all'
+    ? 'Ai đang ghim quán nhiệt tình nhất, tính trên tất cả các nhóm.'
+    : `Ai đang ghim quán nhiệt tình nhất trong nhóm "${activeGroup}".`;
+
+  const counts = {};
+  scope.forEach(p=>{
+    const name = p.from || 'Bạn';
+    if(!counts[name]) counts[name] = { pins: 0, tried: 0 };
+    counts[name].pins++;
+    if(p.status === 'tried') counts[name].tried++;
+  });
+  const ranked = Object.entries(counts).sort((a,b)=>b[1].pins - a[1].pins);
+  const medals = ['🥇','🥈','🥉'];
+  const body = document.getElementById('leaderboardBody');
+  if(ranked.length === 0){
+    body.innerHTML = `<p style="color:var(--ink-soft);font-size:13.5px;">Chưa có ai ghim quán nào cả — làm người đầu tiên nhé!</p>`;
+    return;
+  }
+  body.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">` +
+    ranked.map(([name, c], i)=>`
+      <div style="display:flex;align-items:center;gap:12px;background:#fffdf7;border:1px solid #e3dcc6;
+        border-radius:10px;padding:10px 14px;">
+        <div style="font-size:18px;width:26px;text-align:center;flex-shrink:0;">${medals[i] || (i+1)}</div>
+        <div class="t-avatar" style="width:26px;height:26px;font-size:11px;flex-shrink:0;">${initials(name)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(name)}</div>
+          <div style="font-size:11.5px;color:var(--ink-soft);">${c.pins} quán đã ghim · ${c.tried} đã thử</div>
+        </div>
+      </div>`).join('') + `</div>`;
+}
+
+[document.getElementById('addOverlay'), document.getElementById('shareOverlay'), document.getElementById('leaderboardOverlay')].forEach(ov=>{
   ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('show'); });
 });
 
