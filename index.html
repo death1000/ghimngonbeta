@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GhimNgon — Ghim địa điểm, chơi thật vui</title>
+<title>GhimNgon — Ghim địa điểm, gửi cho hội bạn</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -165,6 +165,39 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
 .comment{font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;line-height:1.5;}
 .comment b{color:var(--ink);font-weight:600;}
 .comment-form{display:flex;gap:6px;margin-top:8px;}
+
+/* ---------- VIEW TOGGLE ---------- */
+.view-toggle{display:flex;gap:2px;background:#0f1d19;border-radius:8px;padding:3px;border:1px solid #223530;}
+.view-toggle button{
+  border:none;background:transparent;color:#8fa79c;font-family:inherit;font-size:12px;
+  padding:6px 10px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;
+}
+.view-toggle button.active{background:var(--yellow);color:#4a2f05;font-weight:600;}
+
+/* ---------- COMPACT VIEW ---------- */
+.grid.compact{display:flex;flex-direction:column;gap:8px;}
+.row{
+  background:var(--paper);color:var(--ink);border-radius:8px;
+  padding:10px 14px;box-shadow:0 3px 8px rgba(0,0,0,0.18);
+  display:flex;align-items:center;gap:12px;transform:none;clip-path:none;
+}
+.row-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.row-dot.st-want{background:var(--yellow-dark);}
+.row-dot.st-tried{background:var(--green-dark);}
+.row-dot.st-no{background:var(--red-dark);}
+.row-main{flex:1;min-width:0;}
+.row-name{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:15px;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row-sub{font-size:11px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.row-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;
+  padding:3px 8px;border-radius:5px;flex-shrink:0;}
+.row-actions{display:flex;gap:4px;flex-shrink:0;}
+.row-actions button{border:none;background:transparent;cursor:pointer;color:#8a8065;padding:5px;border-radius:5px;display:flex;align-items:center;}
+.row-actions button:hover{color:var(--ink);background:#e6dfc9;}
+@media (max-width:560px){
+  .row-cat{display:none;}
+  .row-name{font-size:14px;}
+}
 .comment-form input{
   flex:1;padding:8px 10px;border-radius:8px;border:1px solid #d8cfb2;
   background:#fffdf7;font-family:inherit;font-size:12.5px;outline:none;
@@ -275,6 +308,16 @@ select.chip{-webkit-appearance:none;appearance:none;padding-right:26px;
     <div class="search-box">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b9c9c2" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="searchInput" type="text" placeholder="Tìm theo tên quán, ghi chú, người ghim...">
+    </div>
+    <div class="view-toggle" id="viewToggle">
+      <button id="viewFullBtn" onclick="setViewMode('full')" title="Xem dạng ghi chú">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Ghi chú
+      </button>
+      <button id="viewCompactBtn" onclick="setViewMode('compact')" title="Xem dạng thu gọn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Thu gọn
+      </button>
     </div>
     <button class="add-btn" onclick="openAddModal()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -554,6 +597,19 @@ async function loadPlaces(){
 }
 
 let activeFilter = 'all';
+let viewMode = localStorage.getItem('ghimngon_viewmode') || 'full';
+function setViewMode(mode){
+  viewMode = mode;
+  localStorage.setItem('ghimngon_viewmode', mode);
+  render();
+}
+function syncViewToggleUI(){
+  const fullBtn = document.getElementById('viewFullBtn');
+  const compactBtn = document.getElementById('viewCompactBtn');
+  if(!fullBtn || !compactBtn) return;
+  fullBtn.classList.toggle('active', viewMode==='full');
+  compactBtn.classList.toggle('active', viewMode==='compact');
+}
 let activeGroup = 'all';
 let searchQuery = '';
 let currentTab = 'list';
@@ -658,7 +714,9 @@ function render(){
   renderDigest();
   renderGroupOptions();
   renderFilters();
+  syncViewToggleUI();
   const grid = document.getElementById('grid');
+  grid.classList.toggle('compact', viewMode==='compact');
   const list = getFilteredList();
 
   if(list.length===0){
@@ -666,6 +724,31 @@ function render(){
       <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#7c8f86" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <p>Chưa có quán nào khớp cả.</p><p>Thử ghim quán đầu tiên xem sao.</p>
     </div>`;
+  } else if(viewMode==='compact'){
+    grid.innerHTML = list.map(p=>{
+      const cat = CATS[p.cat];
+      const distTag = (nearbyOn && p._dist!==undefined) ? ` · ${p._dist.toFixed(1)} km` : '';
+      const subParts = [p.area, p.group ? `Nhóm: ${p.group}` : '', `${p.from} · ${p.date}${distTag}`].filter(Boolean);
+      return `<div class="row">
+        <span class="row-dot st-${p.status}" title="${STATUS[p.status]?.label || ''}"></span>
+        <div class="row-main">
+          <div class="row-name">${escapeHtml(p.name)}</div>
+          <div class="row-sub">${escapeHtml(subParts.join(' · '))}</div>
+        </div>
+        <span class="row-cat ${cat.cls}">${cat.label}</span>
+        <div class="row-actions">
+          ${p.link ? `<button title="Mở link" onclick="openLinkSafe('${encodeURIComponent(p.link)}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>` : ''}
+          <button title="Bình luận" onclick="switchToFullAndOpen('${p.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </button>
+          <button title="Xoá" onclick="deletePlace('${p.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </div>`;
+    }).join('');
   } else {
     grid.innerHTML = list.map((p,i) => {
       const cat = CATS[p.cat];
@@ -738,6 +821,14 @@ async function setStatus(id, status){
 function toggleComments(id){
   if(expandedComments.has(id)) expandedComments.delete(id); else expandedComments.add(id);
   render();
+}
+function switchToFullAndOpen(id){
+  viewMode = 'full';
+  localStorage.setItem('ghimngon_viewmode', 'full');
+  expandedComments.add(id);
+  render();
+  const el = document.getElementById('comments-'+id);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
 }
 async function addComment(id){
   const input = document.getElementById('cmt-input-'+id);
